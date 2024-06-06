@@ -118,9 +118,10 @@ const runThrowsErrors = async function (
 ) {
   const conf = mermaidAPI.getConfig();
 
-  log.debug(`${!postRenderCallback ? 'No ' : ''}Callback function found`);
+  console.log(`${!postRenderCallback ? 'No ' : ''}Callback function found`);
 
   let nodesToProcess: ArrayLike<HTMLElement>;
+  console.log('nodes',nodes);
   if (nodes) {
     nodesToProcess = nodes;
   } else if (querySelector) {
@@ -129,9 +130,9 @@ const runThrowsErrors = async function (
     throw new Error('Nodes and querySelector are both undefined');
   }
 
-  log.debug(`Found ${nodesToProcess.length} diagrams`);
+  console.log(`Found ${nodesToProcess.length} diagrams`);
   if (conf?.startOnLoad !== undefined) {
-    log.debug('Start On Load: ' + conf?.startOnLoad);
+    console.log('Start On Load: ' + conf?.startOnLoad);
     mermaidAPI.updateSiteConfig({ startOnLoad: conf?.startOnLoad });
   }
 
@@ -144,7 +145,7 @@ const runThrowsErrors = async function (
   // element is the current div with mermaid class
   // eslint-disable-next-line unicorn/prefer-spread
   for (const element of Array.from(nodesToProcess)) {
-    log.info('Rendering diagram: ' + element.id);
+    console.log('Rendering diagram: ' + element.id);
     /*! Check if previously processed */
     if (element.getAttribute('data-processed')) {
       continue;
@@ -163,15 +164,17 @@ const runThrowsErrors = async function (
 
     const init = utils.detectInit(txt);
     if (init) {
-      log.debug('Detected early reinit: ', init);
+      console.log('Detected early reinit: ', init);
     }
     try {
       const { svg, bindFunctions } = await render(id, txt, element);
       element.innerHTML = svg;
       if (postRenderCallback) {
+        console.log('postRenderCallback',postRenderCallback);
         await postRenderCallback(id);
       }
       if (bindFunctions) {
+        console.log('bindFunctions',bindFunctions);
         bindFunctions(element);
       }
     } catch (error) {
@@ -324,6 +327,7 @@ const parse = async (text: string, parseOptions?: ParseOptions): Promise<boolean
         mermaidAPI.parse(text, parseOptions).then(
           (r) => {
             // This resolves for the promise for the queue handling
+            console.log('r',r);
             res(r);
             // This fulfills the promise sent to the value back to the original caller
             resolve(r);
@@ -365,6 +369,7 @@ const parse = async (text: string, parseOptions?: ParseOptions): Promise<boolean
  * @returns Returns the SVG Definition and BindFunctions.
  */
 const render = (id: string, text: string, container?: Element): Promise<RenderResult> => {
+  console.log('render...');
   return new Promise((resolve, reject) => {
     // This promise will resolve when the mermaidAPI.render call is done.
     // It will be queued first and will be executed when it is first in line

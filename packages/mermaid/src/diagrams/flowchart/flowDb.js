@@ -64,6 +64,7 @@ export const lookUpDomId = function (id) {
 export const addVertex = function (_id, textObj, type, style, classes, dir, props = {}) {
   let txt;
   let id = _id;
+  console.log('dir::',dir);
   if (id === undefined) {
     return;
   }
@@ -80,6 +81,7 @@ export const addVertex = function (_id, textObj, type, style, classes, dir, prop
       domId: MERMAID_DOM_ID_PREFIX + id + '-' + vertexCounter,
       styles: [],
       classes: [],
+      dir: dir
     };
   }
   vertexCounter++;
@@ -137,7 +139,7 @@ export const addSingleLink = function (_start, _end, type) {
   // log.info('Got edge...', start, end);
 
   const edge = { start: start, end: end, type: undefined, text: '', labelType: 'text' };
-  log.info('abc78 Got edge...', edge);
+  console.log('abc78 Got edge...', edge);
   const linkTextObj = type.text;
 
   if (linkTextObj !== undefined) {
@@ -483,6 +485,7 @@ export const defaultStyle = function () {
  * @param _title
  */
 export const addSubGraph = function (_id, list, _title) {
+  console.log('_id', _id, 'list',list, '_title',_title);
   let id = _id.text.trim();
   let title = _title.text;
   if (_id === _title && _title.text.match(/\s/)) {
@@ -495,9 +498,11 @@ export const addSubGraph = function (_id, list, _title) {
 
     let dir; //  = undefined; direction.trim();
     const nodeList = a.filter(function (item) {
+      console.log('item',item);
       const type = typeof item;
       if (item.stmt && item.stmt === 'dir') {
         dir = item.value;
+        console.log('dir',dir);
         return false;
       }
       if (item.trim() === '') {
@@ -509,6 +514,7 @@ export const addSubGraph = function (_id, list, _title) {
         return objs.includes(item) ? false : objs.push(item);
       }
     });
+    console.log('nodeList',nodeList);
     return { nodeList, dir };
   }
 
@@ -516,6 +522,7 @@ export const addSubGraph = function (_id, list, _title) {
 
   const { nodeList: nl, dir } = uniq(nodeList.concat.apply(nodeList, list));
   nodeList = nl;
+  console.log('nodeList',nodeList);
   if (version === 'gen-1') {
     for (let i = 0; i < nodeList.length; i++) {
       nodeList[i] = lookUpDomId(nodeList[i]);

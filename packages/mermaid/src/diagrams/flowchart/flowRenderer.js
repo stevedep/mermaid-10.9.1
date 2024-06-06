@@ -329,6 +329,7 @@ export const draw = async function (text, id, _version, diagObj) {
 
   let subG;
   const subGraphs = diagObj.db.getSubGraphs();
+  console.log('subGraphs',subGraphs);
   for (let i = subGraphs.length - 1; i >= 0; i--) {
     subG = subGraphs[i];
     diagObj.db.addVertex(subG.id, subG.title, 'group', undefined, subG.classes);
@@ -336,6 +337,7 @@ export const draw = async function (text, id, _version, diagObj) {
 
   // Fetch the vertices/nodes and edges/links from the parsed graph definition
   const vert = diagObj.db.getVertices();
+console.log('  vert',  vert);
   log.warn('Get vertices', vert);
 
   const edges = diagObj.db.getEdges();

@@ -29,17 +29,25 @@ graph TB
       a[sdfsd]
 
       subgraph one    
-      direction TB
-      Hello
-      World
-          Hello ==> World
-          
+        direction TB
+        Hello
+        World
+        Hello ==> World
+        a ==> Hello    
       end
-      a ==> Hello
+
+      subgraph two
+        direction RL
+        c
+        d
+        c ==> d
+        World ==> c
+      end
+      
   `;
       const el = document.getElementById('dynamicDiagram');
       const { svg } = await mermaid.render('dd', value);
-      console.log(svg);
+      // console.log(svg);
       el.innerHTML = svg;
     </script>
   </body>

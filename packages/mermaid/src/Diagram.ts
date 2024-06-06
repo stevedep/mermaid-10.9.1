@@ -55,9 +55,11 @@ export class Diagram {
       this.db.setDiagramTitle?.(this.metadata.title);
     }
     this.parser.parse(this.text);
+    console.log('this.text',this.text);
   }
 
   async render(id: string, version: string) {
+  
     await this.renderer.draw(this.text, id, version, this);
   }
 

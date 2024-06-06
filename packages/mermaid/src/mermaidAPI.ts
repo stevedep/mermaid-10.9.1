@@ -82,6 +82,7 @@ export interface RenderResult {
 
 function processAndSetConfigs(text: string) {
   const processed = preprocessDiagram(text);
+  console.log('processed',processed);
   configApi.reset();
   configApi.addDirective(processed.config ?? {});
   return processed;
@@ -336,7 +337,7 @@ const render = async function (
   svgContainingElement?: Element
 ): Promise<RenderResult> {
   addDiagrams();
-
+  console.log('bij render');
   const processed = processAndSetConfigs(text);
   text = processed.code;
 
@@ -408,7 +409,9 @@ const render = async function (
   let parseEncounteredException;
 
   try {
+    
     diag = await getDiagramFromText(text, { title: processed.title });
+    console.log('diag from text',diag);
   } catch (error) {
     diag = new Diagram('error');
     parseEncounteredException = error;
@@ -436,6 +439,7 @@ const render = async function (
   // Draw the diagram with the renderer
   try {
     await diag.renderer.draw(text, id, version, diag);
+    console.log('diag',diag);
   } catch (e) {
     errorRenderer.draw(text, id, version);
     throw e;
@@ -455,7 +459,7 @@ const render = async function (
 
   log.debug('config.arrowMarkerAbsolute', config.arrowMarkerAbsolute);
   svgCode = cleanUpSvgCode(svgCode, isSandboxed, evaluate(config.arrowMarkerAbsolute));
-
+  console.log('svgCode',svgCode);
   if (isSandboxed) {
     const svgEl = root.select(enclosingDivID_selector + ' svg').node();
     svgCode = putIntoIFrame(svgCode, svgEl);
