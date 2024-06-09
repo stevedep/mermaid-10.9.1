@@ -27,7 +27,7 @@ graph TB
       const value = `  %%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
       flowchart LR
       a[sdfsd]
-
+subgraph boven
       subgraph one    
         direction TB
         Hello
@@ -35,13 +35,15 @@ graph TB
         Hello ==> World
         a ==> Hello    
       end
+end
 
       subgraph two
         direction RL
         c
         d
-        c ==> d
-        World ==> c
+        
+         c ==> d  
+         a ==> c
       end
       
   `;
