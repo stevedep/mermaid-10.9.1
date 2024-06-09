@@ -896,54 +896,62 @@ export const draw = async function (text, id, _version, diagObj) {
     return jsonObject;
 }
 
-function addParentAttributesToEdges(jsonObject) {
-    function findNodeById(node, id) {
-        if (node.id === id) {
-            return node;
-        }
-        if (node.children) {
+function addParentIdsToEdges(jsonObject) {
+    const nodeIdToParentId = {};
+
+    function mapNodeIdsToParentIds(node, parentId) {
+        nodeIdToParentId[node.id] = parentId;
+        if (node.children && node.children.length > 0) {
             for (const child of node.children) {
-                const result = findNodeById(child, id);
-                if (result) {
-                    return result;
-                }
+                mapNodeIdsToParentIds(child, node.id);
             }
         }
-        return null;
     }
 
-    function findTopParent(node) {
-        if (!node.parent || node.parent === "root") {
-            return node.id;
+    mapNodeIdsToParentIds(jsonObject, null);
+
+    for (const edge of jsonObject.edges) {
+        edge.sourceParentId = nodeIdToParentId[edge.sourceId];
+        edge.targetParentId = nodeIdToParentId[edge.targetId];
+    }
+}
+
+function modifyLayoutOptionsForLowestLevelNodes(jsonObject) {
+    function findLowestLevelNodes(node) {
+        if (node.lowest_level) {
+            checkAndModifyNode(node);
+        } else if (node.children && node.children.length > 0) {
+            for (const child of node.children) {
+                findLowestLevelNodes(child);
+            }
         }
-        let current = node;
-        let parent = findNodeById(jsonObject, current.parent);
-        while (parent && parent.parent !== "root") {
-            current = parent;
-            parent = findNodeById(jsonObject, current.parent);
-        }
-        return current.id;
     }
 
-    if (jsonObject.edges) {
+    function checkAndModifyNode(node) {
+        let allChildrenEdgesHaveSameParentId = true;
         for (const edge of jsonObject.edges) {
-            const sourceNode = findNodeById(jsonObject, edge.sourceId);
-            const targetNode = findNodeById(jsonObject, edge.targetId);
+            if ((edge.sourceParentId === node.id && edge.targetParentId !== node.id) || 
+                (edge.targetParentId === node.id && edge.sourceParentId !== node.id)) {
+                allChildrenEdgesHaveSameParentId = false;
+                break;
+            }
+        }
 
-            if (sourceNode) {
-                edge.sourceTopParent = findTopParent(sourceNode);
+        if (allChildrenEdgesHaveSameParentId) {
+            if (!node.layoutOptions) {
+                node.layoutOptions = {};
             }
-            if (targetNode) {
-                edge.targetTopParent = findTopParent(targetNode);
-            }
+            node.layoutOptions["elk.hierarchyHandling"] = "SEPARATE_CHILDREN";
         }
     }
 
-    return jsonObject;
+    findLowestLevelNodes(jsonObject);
 }
 const updatedData = addLowestLevelAttribute(graph);
-const graph2 = addParentAttributesToEdges(updatedData);
-const g = await elk.layout(graph2);
+addParentIdsToEdges(updatedData);
+modifyLayoutOptionsForLowestLevelNodes(updatedData);
+
+const g = await elk.layout(updatedData);
   drawNodes(0, 0, g.children, svg, subGraphsEl, diagObj, 0);
   console.log('after layout', g);
   g.edges?.map((edge) => {
