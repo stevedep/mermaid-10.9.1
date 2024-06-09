@@ -205,7 +205,7 @@ export const addVertices = async function (vert, svgId, root, doc, diagObj, pare
         labelData.wrappingWidth = getConfig().flowchart.wrappingWidth;
         labelData.height = bbox.height;
         labelData.labelNode = shapeSvg.node();
-        node.labelData = labelData;      
+        node.labelData = labelData;
       }
       // const { shapeSvg, bbox } = await labelHelper(svg, node, undefined, true);
 
@@ -229,7 +229,8 @@ export const addVertices = async function (vert, svgId, root, doc, diagObj, pare
         // haveCallback: vertex.haveCallback,
         width: boundingBox?.width,
         height: boundingBox?.height,
-         dir: vertex.dir, // dit is em!!!
+        // let op; onderstaande uncomment
+        dir: vertex.dir,
         type: vertex.type,
         // props: vertex.props,
         // padding: getConfig().flowchart.padding,
@@ -242,6 +243,7 @@ export const addVertices = async function (vert, svgId, root, doc, diagObj, pare
       //   ...data,
       // });
       // }
+      // let op: wordt hier meegenomen. 
       nodeDb[node.id] = data;
       // log.trace('setNode', {
       //   labelStyle: styles.labelStyle,
@@ -363,7 +365,6 @@ const getNextPort = (node, edgeDirection, graphDirection) => {
 };
 
 const getEdgeStartEndPoint = (edge, dir) => {
-  console.log('edgestartend',edge);
   let source = edge.start;
   let target = edge.end;
 
@@ -401,10 +402,7 @@ const getEdgeStartEndPoint = (edge, dir) => {
  * @param svg
  */
 export const addEdges = function (edges, diagObj, graph, svg) {
-
-  console.log('abc78 edges = ', edges);
-  
-  console.log('graph78__',graph);
+  log.info('abc78 edges = ', edges);
   const labelsEl = svg.insert('g').attr('class', 'edgeLabels');
   let linkIdCnt = {};
   let dir = diagObj.db.getDirection();
@@ -538,8 +536,6 @@ export const addEdges = function (edges, diagObj, graph, svg) {
     const { source, target, sourceId, targetId } = getEdgeStartEndPoint(edge, dir);
     log.debug('abc78 source and target', source, target);
     // Add the edge to the graph
-    
-  console.log('graph voor de push',graph);
     graph.edges.push({
       id: 'e' + edge.start + edge.end,
       sources: [source],
@@ -562,7 +558,6 @@ export const addEdges = function (edges, diagObj, graph, svg) {
       ],
       edgeData,
     });
-    console.log('graph na de push',graph);
   });
   return graph;
 };
@@ -628,6 +623,7 @@ const addSubGraphs = function (db) {
       data.parent = parentLookupDb.parentById[subgraph.id];
     }
   });
+  console.log('parentLookupDb',parentLookupDb);
   return parentLookupDb;
 };
 
@@ -642,9 +638,8 @@ const calcOffset = function (src, dest, parentLookupDb) {
 };
 
 const insertEdge = function (edgesEl, edge, edgeData, diagObj, parentLookupDb, id) {
-  console.log('edgesEL', edgesEl, 'edge', edge, 'edgeData', edgeData, 'diagObj', diagObj, 'parentLookupDb', parentLookupDb, 'id', id)
   const offset = calcOffset(edge.sourceId, edge.targetId, parentLookupDb);
-if (edge.sections) {
+
   const src = edge.sections[0].startPoint;
   const dest = edge.sections[0].endPoint;
   const segments = edge.sections[0].bendPoints ? edge.sections[0].bendPoints : [];
@@ -674,8 +669,6 @@ if (edge.sections) {
     `translate(${edge.labels[0].x + offset.x}, ${edge.labels[0].y + offset.y})`
   );
   addMarkersToEdge(edgePath, edgeData, diagObj.type, diagObj.arrowMarkerAbsolute, id);
-
-}
 };
 
 /**
@@ -718,29 +711,23 @@ export const draw = async function (text, id, _version, diagObj) {
   portPos = {};
   diagObj.db.setGen('gen-2');
   // Parse the graph definition
-  console.log('text',text);
-  const vert0 = diagObj.db.getVertices();
-  console.log('vert0',vert0);
   diagObj.parser.parse(text);
-  const vert1 = diagObj.db.getVertices();
-  console.log('vert1',vert1);
+
   const renderEl = select('body').append('div').attr('style', 'height:400px').attr('id', 'cy');
   let graph = {
-    id: 'root'
-    ,    layoutOptions: {
-     // 'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+    id: 'root',
+    layoutOptions: {
+      'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
       'org.eclipse.elk.padding': '[top=100, left=100, bottom=110, right=110]',
       'elk.layered.spacing.edgeNodeBetweenLayers': '30',
       // 'elk.layered.mergeEdges': 'true',
       'elk.direction': 'DOWN',
       // 'elk.ports.sameLayerEdges': true,
       // 'nodePlacement.strategy': 'SIMPLE',
-    }
-    ,
+    },
     children: [],
     edges: [],
   };
-  
   log.info('Drawing flowchart using v3 renderer', elk);
 
   // Set the direction,
@@ -760,8 +747,6 @@ export const draw = async function (text, id, _version, diagObj) {
       graph.layoutOptions['elk.direction'] = 'LEFT';
       break;
   }
-  
-  console.log('graph1__',graph);
   const { securityLevel, flowchart: conf } = getConfig();
 
   // Find the root dom node to ne used in rendering
@@ -783,17 +768,17 @@ export const draw = async function (text, id, _version, diagObj) {
 
   // Add the marker definitions to the svg as marker tags
   insertMarkers(svg, markers, diagObj.type, id);
+
   // Fetch the vertices/nodes and edges/links from the parsed graph definition
   const vert = diagObj.db.getVertices();
-  console.log('vert',vert);
+
   // Setup nodes from the subgraphs with type group, these will be used
   // as nodes with children in the subgraph
   let subG;
   const subGraphs = diagObj.db.getSubGraphs();
-  console.log('Subgraphs - ', subGraphs);
+  log.info('Subgraphs - ', subGraphs);
   for (let i = subGraphs.length - 1; i >= 0; i--) {
     subG = subGraphs[i];
-    console.log('subG',subG);
     diagObj.db.addVertex(
       subG.id,
       { text: subG.title, type: subG.labelType },
@@ -811,21 +796,19 @@ export const draw = async function (text, id, _version, diagObj) {
 
   // Create the lookup db for the subgraphs and their children to used when creating
   // the tree structured graph
-  console.log('diagObj.db',diagObj.db);
   const parentLookupDb = addSubGraphs(diagObj.db);
 
   // Add the nodes to the graph, this will entail creating the actual nodes
   // in order to get the size of the node. You can't get the size of a node
   // that is not in the dom so we need to add it to the dom, get the size
   // we will position the nodes when we get the layout from elkjs
-  console.log('vert__',vert, 'id', id, 'root', root, 'doc', doc, 'diagObj', diagObj, 'parentLookupDb', parentLookupDb, 'graph', graph);
-  graph = await addVertices(vert, id, root, doc, diagObj, parentLookupDb, graph); // hier moet het gebeuren, toch hiervoor al
-  console.log('graph',graph);
+  graph = await addVertices(vert, id, root, doc, diagObj, parentLookupDb, graph);
+
   // Time for the edges, we start with adding an element in the node to hold the edges
   const edgesEl = svg.insert('g').attr('class', 'edges edgePath');
   // Fetch the edges form the parsed graph definition
   const edges = diagObj.db.getEdges();
-  console.log('edges',edges);
+
   // Add the edges to the graph, this will entail creating the actual edges
   graph = addEdges(edges, diagObj, graph, svg);
 
@@ -839,7 +822,6 @@ export const draw = async function (text, id, _version, diagObj) {
     }
     // Subgraph
     if (parentLookupDb.childrenById[nodeId] !== undefined) {
-      console.log('node.dir',node.dir);
       node.labels = [
         {
           text: node.labelText,
@@ -852,240 +834,124 @@ export const draw = async function (text, id, _version, diagObj) {
           // height: 100,
         },
       ];
-     node.layoutOptions = { 
-   // 'elk.hierarchyHandling': 'SEPARATE_CHILDREN',
-    'elk.direction' : (function(){
+      // let op, onderstaande toegevoegd
+      node.layoutOptions = {
+      "elk.direction": function() {
         switch (node.dir) {
-            case 'BT': return 'UP';
-            case 'TB': return 'DOWN';
-            case 'LR': return 'RIGHT';
-            case 'RL': return 'LEFT';
+          case 'BT':
+            return 'UP';
+            
+          case 'TB':
+            return 'DOWN';
+            
+          case 'LR':
+            return 'RIGHT';
+            
+          case 'RL':
+            return 'LEFT';
+            
         }
-    })()
-};
+      }(),
+      },
       delete node.x;
       delete node.y;
       delete node.width;
       delete node.height;
     }
   });
-  console.log('graph.children',graph.children);
+
   insertChildren(graph.children, parentLookupDb);
-  console.log('after layout123:', graph); // JSON.stringify(graph, null, 2));
-  let graph2 = {
-    "id": "root",
-    "children": [
-      {
-        "id": "subGraph0",
-        "layoutOptions": {
-      "elk.algorithm": "layered",
-      "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-      "elk.direction" : "DOWN"
-    },
-        "edges": [
-      {
-        "id": "eHelloWorld",
-        "sources": [
-          "Hello"
-        ],
-        "targets": [
-          "World"
-        ],
-        "sourceId": "Hello",
-        "targetId": "World",
-        "labelEl": {},
-        "labels": [
-          {
-            "width": 0,
-            "height": 0,
-            "orgWidth": 0,
-            "orgHeight": 0,
-            "text": "",
-            "layoutOptions": {
-              "edgeLabels.inline": "true",
-              "edgeLabels.placement": "CENTER"
-            }
-          }
-        ],
-        "edgeData": {
-          "style": "stroke-width: 3.5px;fill:none;",
-          "labelStyle": "",
-          "minlen": 1,
-          "arrowhead": "normal",
-          "arrowTypeStart": "arrow_open",
-          "arrowTypeEnd": "arrow_point",
-          "thickness": "thick",
-          "pattern": "solid",
-          "arrowheadStyle": "fill: #333",
-          "labelpos": "c",
-          "labelType": "text",
-          "label": "",
-          "id": "L-Hello-World-0",
-          "classes": "flowchart-link LS-Hello LE-World",
-          "width": 0,
-          "height": 0
+  console.log('before layout', graph);
+  function addLowestLevelAttribute(jsonObject) {
+    function markLowestLevel(node) {
+        if (!node.children || node.children.length === 0) {
+            return true;
         }
-      },
-      {
-        "id": "eaHello",
-        "sources": [
-          "a"
-        ],
-        "targets": [
-          "Hello"
-        ],
-        "sourceId": "a",
-        "targetId": "Hello",
-        "labelEl": {},
-        "labels": [
-          {
-            "width": 0,
-            "height": 0,
-            "orgWidth": 0,
-            "orgHeight": 0,
-            "text": "",
-            "layoutOptions": {
-              "edgeLabels.inline": "true",
-              "edgeLabels.placement": "CENTER"
+
+        let allChildrenAreLowestLevel = true;
+        for (const child of node.children) {
+            if (!markLowestLevel(child)) {
+                allChildrenAreLowestLevel = false;
             }
-          }
-        ],
-        "edgeData": {
-          "style": "stroke-width: 3.5px;fill:none;",
-          "labelStyle": "",
-          "minlen": 1,
-          "arrowhead": "normal",
-          "arrowTypeStart": "arrow_open",
-          "arrowTypeEnd": "arrow_point",
-          "thickness": "thick",
-          "pattern": "solid",
-          "arrowheadStyle": "fill: #333",
-          "labelpos": "c",
-          "labelType": "text",
-          "label": "",
-          "id": "L-a-Hello-0",
-          "classes": "flowchart-link LS-a LE-Hello",
-          "width": 0,
-          "height": 0
         }
-      }
-    ],
-        "ports": [],
-        "layoutOptions": {
-          "elk.hierarchyHandling": "SEPARATE_CHILDREN",
-          "elk.direction": "DOWN"
-        },
-        "labelText": "one",
-        "labelData": {
-          "width": 26.0625,
-          "height": 19,
-          "wrappingWidth": 200,
-          "labelNode": {}
-        },
-        "domId": "flowchart-subGraph0-14",
-        "dir": "TB",
-        "type": "group",
-        "labels": [
-          {
-            "text": "one",
-            "layoutOptions": {
-              "nodeLabels.placement": "[H_CENTER, V_TOP, INSIDE]"
-            },
-            "width": 26.0625,
-            "height": 19
-          }
-        ],
-        "children": [
-          {
-            "id": "Hello",
-            "ports": [],
-            "layoutOptions": {
-              "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-              "elk.direction": "UP"
-            },
-            "labelText": "Hello",
-            "labelData": {
-              "width": 0,
-              "height": 0
-            },
-            "domId": "flowchart-Hello-8",
-            "width": 52.21875,
-            "height": 34,
-            "el": {
-              "_groups": [
-                [
-                  {}
-                ]
-              ],
-              "_parents": [
-                {}
-              ]
-            },
-            "parent": "subGraph0",
-            "children": []
-          },
-          {
-            "id": "World",
-            "ports": [],
-            "layoutOptions": {
-              "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-              "elk.direction": "UP"
-            },
-            "labelText": "World",
-            "labelData": {
-              "width": 0,
-              "height": 0
-            },
-            "domId": "flowchart-World-9",
-            "width": 56.34375,
-            "height": 34,
-            "el": {
-              "_groups": [
-                [
-                  {}
-                ]
-              ],
-              "_parents": [
-                {}
-              ]
-            },
-            "parent": "subGraph0",
-            "children": []
-          }
-        ]
-      },
-      {
-        "id": "a",
-        "ports": [],
-        "layoutOptions": {
-          "elk.hierarchyHandling": "INCLUDE_CHILDREN",
-          "elk.direction": "UP"
-        },
-        "labelText": "sdfsd",
-        "labelData": {
-          "width": 0,
-          "height": 0
-        },
-        "domId": "flowchart-a-7",
-        "width": 51.703125,
-        "height": 34,
-        "type": "square",
-        "el": {
-          "_groups": [
-            [
-              {}
-            ]
-          ],
-          "_parents": [
-            {}
-          ]
-        },
-        "children": []
-      }
-    ]
-    
-  };
-  const g = await elk.layout(graph);
+
+        if (allChildrenAreLowestLevel) {
+            node.lowest_level = true;
+        }
+
+        return false;
+    }
+
+    function processNode(node) {
+        if (node.children && node.children.length > 0) {
+            for (const child of node.children) {
+                processNode(child);
+            }
+        }
+        markLowestLevel(node);
+    }
+
+    processNode(jsonObject);
+
+    return jsonObject;
+}
+
+function addParentIdsToEdges(jsonObject) {
+    const nodeIdToParentId = {};
+
+    function mapNodeIdsToParentIds(node, parentId) {
+        nodeIdToParentId[node.id] = parentId;
+        if (node.children && node.children.length > 0) {
+            for (const child of node.children) {
+                mapNodeIdsToParentIds(child, node.id);
+            }
+        }
+    }
+
+    mapNodeIdsToParentIds(jsonObject, null);
+
+    for (const edge of jsonObject.edges) {
+        edge.sourceParentId = nodeIdToParentId[edge.sourceId];
+        edge.targetParentId = nodeIdToParentId[edge.targetId];
+    }
+}
+
+function modifyLayoutOptionsForLowestLevelNodes(jsonObject) {
+    function findLowestLevelNodes(node) {
+        if (node.lowest_level) {
+            checkAndModifyNode(node);
+        } else if (node.children && node.children.length > 0) {
+            for (const child of node.children) {
+                findLowestLevelNodes(child);
+            }
+        }
+    }
+
+    function checkAndModifyNode(node) {
+        let allChildrenEdgesHaveSameParentId = true;
+        for (const edge of jsonObject.edges) {
+            if ((edge.sourceParentId === node.id && edge.targetParentId !== node.id) || 
+                (edge.targetParentId === node.id && edge.sourceParentId !== node.id)) {
+                allChildrenEdgesHaveSameParentId = false;
+                break;
+            }
+        }
+
+        if (allChildrenEdgesHaveSameParentId) {
+            if (!node.layoutOptions) {
+                node.layoutOptions = {};
+            }
+            node.layoutOptions["elk.hierarchyHandling"] = "SEPARATE_CHILDREN";
+        }
+    }
+
+    findLowestLevelNodes(jsonObject);
+}
+const updatedData = addLowestLevelAttribute(graph);
+addParentIdsToEdges(updatedData);
+modifyLayoutOptionsForLowestLevelNodes(updatedData);
+
+const g = await elk.layout(updatedData);
   drawNodes(0, 0, g.children, svg, subGraphsEl, diagObj, 0);
   console.log('after layout', g);
   g.edges?.map((edge) => {
@@ -1109,6 +975,7 @@ const drawNodes = (relX, relY, nodeArray, svg, subgraphsEl, diagObj, depth) => {
         height: node.height,
       };
       if (node.type === 'group') {
+        console.log('node:::::',node);
         const subgraphEl = subgraphsEl.insert('g').attr('class', 'subgraph');
         subgraphEl
           .insert('rect')

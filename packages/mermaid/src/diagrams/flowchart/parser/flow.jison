@@ -329,33 +329,29 @@ spaceList
 
 statement
     : vertexStatement separator
-    { console.log('vertexStatement executed'); $$=$vertexStatement.nodes;}
+    { /* console.warn('finat vs', $vertexStatement.nodes); */ $$=$vertexStatement.nodes}
     | styleStatement separator
-    { console.log('styleStatement executed'); $$=[];}
+    {$$=[];}
     | linkStyleStatement separator
-    { console.log('linkStyleStatement executed'); $$=[];}
+    {$$=[];}
     | classDefStatement separator
-    { console.log('classDefStatement executed'); $$=[];}
+    {$$=[];}
     | classStatement separator
-    { console.log('classStatement executed'); $$=[];}
+    {$$=[];}
     | clickStatement separator
-    { console.log('clickStatement executed'); $$=[];}
+    {$$=[];}
     | subgraph SPACE textNoTags SQS text SQE separator document end
-    { console.log('subgraph with SQS and SQE executed'); $$=yy.addSubGraph($textNoTags,$document,$text);}
+    {$$=yy.addSubGraph($textNoTags,$document,$text);}
     | subgraph SPACE textNoTags separator document end
-    { console.log('subgraph without SQS and SQE executed'); $$=yy.addSubGraph($textNoTags,$document,$textNoTags);}
+    {$$=yy.addSubGraph($textNoTags,$document,$textNoTags);}
+    // | subgraph SPACE textNoTags separator document end
+    // {$$=yy.addSubGraph($textNoTags,$document,$textNoTags);}
     | subgraph separator document end
-    { console.log('subgraph without textNoTags executed'); $$=yy.addSubGraph(undefined,$document,undefined);}
-    | direction    
-    { console.log('direction executed'); }
-    | acc_title acc_title_value  
-    { console.log('acc_title executed'); $$=$acc_title_value.trim();yy.setAccTitle($$); }
-    | acc_descr acc_descr_value  
-    { console.log('acc_descr executed'); $$=$acc_descr_value.trim();yy.setAccDescription($$); }
-    | acc_descr_multiline_value 
-    { console.log('acc_descr_multiline_value executed'); $$=$acc_descr_multiline_value.trim();yy.setAccDescription($$); }
-    | link
-    { console.log('linkStatement executed');}
+    {$$=yy.addSubGraph(undefined,$document,undefined);}
+    | direction
+    | acc_title acc_title_value  { $$=$acc_title_value.trim();yy.setAccTitle($$); }
+    | acc_descr acc_descr_value  { $$=$acc_descr_value.trim();yy.setAccDescription($$); }
+    | acc_descr_multiline_value { $$=$acc_descr_multiline_value.trim();yy.setAccDescription($$); }
     ;
 
 separator: NEWLINE | SEMI | EOF ;
